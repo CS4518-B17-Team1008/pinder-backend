@@ -23,9 +23,8 @@ app.get('/timestamp', (req, res) => {
 
 app.post('/echo', (req, res) => {
 	console.log(req.body);
-	res.writeHead(200, {'Content-Type': 'text/plain'});
-	res.write(req.body);
-	res.end();
+	res.status(200);
+	res.json(req.body);
 });
 
 
