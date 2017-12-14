@@ -31,7 +31,7 @@ app.post('/users/:userId/match/:projectId', (req, res) => {
     admin.database().ref("users/" + req.params.userId + "/potentialmatch")
     .push().set({projectId: req.params.projectId});
     admin.database().ref("projects/" + req.params.projectId + "/potentialmatch")
-    .push.set({userId: req.params.userId});
+    .push().set({userId: req.params.userId});
     res.status(200);
     res.end();
 });
@@ -44,7 +44,7 @@ app.post('/users/:userId/unmatch/:projectId', (req, res) => {
 });
 
 app.post('/projects/:projectId/match/:userId', (req, res) => {
-    hasUser = false;
+    var hasUser = false;
     admin.database().ref("projects/" + req.params.projectId + "/potentialmatch")
     .once("value", function(snapshot) {
         snapshot.forEach(function(data) {
@@ -56,7 +56,7 @@ app.post('/projects/:projectId/match/:userId', (req, res) => {
             admin.database().ref("users/" + req.params.userId + "/match")
             .push().set({projectId: req.params.projectId});
             admin.database().ref("projects/" + req.params.projectId + "/match")
-            .push.set({userId: req.params.userId});
+            .push().set({userId: req.params.userId});
             res.status(200);
             res.end();
         }
@@ -71,7 +71,7 @@ app.post('/projects/:projectId/match/:userId', (req, res) => {
 });
 
 app.post('/projects/:projectId/unmatch/:userId', (req, res) => {
-    hasUser = false;
+    var hasUser = false;
     admin.database().ref("projects/" + req.params.projectId + "/potentialmatch")
     .once("value", function(snapshot) {
         snapshot.forEach(function(data) {
@@ -107,6 +107,12 @@ app.post('/projects/:projectId/unmatch/:userId', (req, res) => {
         res.status(500);
         res.end();
     });
+});
+
+exports.listen = functions.database.ref("projects/{projectId}/creator").onWrite(event => {
+    var creatorId = event.data.val();
+    return event.data.ref.root.child("users/" + creatorId + "/leadprojects")
+    .push().set({ projectId: event.params.projectId });
 });
 
 exports.app = functions.https.onRequest(app);
