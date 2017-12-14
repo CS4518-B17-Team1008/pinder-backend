@@ -96,6 +96,8 @@ app.post('/projects/:projectId/unmatch/:userId', (req, res) => {
                     }
                 });
             });
+            admin.database().ref("projects/" + req.params.projectId + "/unmatch")
+            .push().set({userId: req.params.userId});
             res.status(200);
             res.end();
         }
