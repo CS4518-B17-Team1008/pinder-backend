@@ -27,5 +27,86 @@ app.post('/echo', (req, res) => {
 	res.json(req.body);
 });
 
+app.post('/users/:userId/match/:projectId', (req, res) => {
+    admin.database().ref("users/" + req.params.userId + "/potentialmatch")
+    .push().set({projectId: req.params.projectId});
+    admin.database().ref("projects/" + req.params.projectId + "/potentialmatch")
+    .push.set({userId: req.params.userId});
+    res.status(200);
+    res.end();
+});
+
+app.post('/users/:userId/unmatch/:projectId', (req, res) => {
+    admin.database().ref("users/" + req.params.userId + "/unmatch")
+    .push().set({projectId: req.params.projectId});
+    res.status(200);
+    res.end();
+});
+
+app.post('/projects/:projectId/match/:userId', (req, res) => {
+    hasUser = false;
+    admin.database().ref("projects/" + req.params.projectId + "/potentialmatch")
+    .once("value", function(snapshot) {
+        snapshot.forEach(function(data) {
+            if (data.val().userId == req.params.userId) {
+                hasUser = true;
+            }
+        });
+        if (hasUser) {
+            admin.database().ref("users/" + req.params.userId + "/match")
+            .push().set({projectId: req.params.projectId});
+            admin.database().ref("projects/" + req.params.projectId + "/match")
+            .push.set({userId: req.params.userId});
+            res.status(200);
+            res.end();
+        }
+        else {
+            res.status(500);
+            res.end();
+        }
+    }, function(errorObject) {
+        res.status(500);
+        res.end();
+    });
+});
+
+app.post('/projects/:projectId/unmatch/:userId', (req, res) => {
+    hasUser = false;
+    admin.database().ref("projects/" + req.params.projectId + "/potentialmatch")
+    .once("value", function(snapshot) {
+        snapshot.forEach(function(data) {
+            if (data.val().userId == req.params.userId) {
+                hasUser = true;
+            }
+        });
+        if (hasUser) {
+            admin.database().ref("users/" + req.params.userId + "/potentialmatch")
+            .once("value", function(snapshot) {
+                snapshot.forEach(function(data) {
+                    if (data.val().projectId == req.params.projectId) {
+                        data.remove();
+                    }
+                });
+            });
+            admin.database().ref("projects/" + req.params.projectId + "/potentialmatch")
+            .once("value", function(snapshot) {
+                snapshot.forEach(function(data) {
+                    if (data.val().userId == req.params.userId) {
+                        data.remove();
+                    }
+                });
+            });
+            res.status(200);
+            res.end();
+        }
+        else {
+            res.status(500);
+            res.end();
+        }
+    }, function(errorObject) {
+        res.status(500);
+        res.end();
+    });
+});
 
 exports.app = functions.https.onRequest(app);
